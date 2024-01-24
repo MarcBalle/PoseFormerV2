@@ -4,6 +4,7 @@ import numpy as np
 import torch
 
 from common.arguments import parse_args
+from common.skeleton import Skeleton
 from common.camera import *
 from common.model_poseformer import *
 
@@ -23,8 +24,51 @@ if __name__ == "__main__":
     keypoints = np.load(args.keypoints, allow_pickle=True)["keypoints"]
     keypoints = np.expand_dims(keypoints, axis=1)
     # TODO: fill if needed
-    keypoints_metadata = None
+    keypoints_metadata = {
+        "layout_name": "h36m",
+        "num_joints": 17,
+        "keypoints_symmetry": [[4, 5, 6, 11, 12, 13], [1, 2, 3, 14, 15, 16]],
+    }
     keypoints_symmetry = None
+    azimuth = np.array(70.0, dtype="float32")
+    h36m_skeleton = Skeleton(
+        parents=[
+            -1,
+            0,
+            1,
+            2,
+            3,
+            4,
+            0,
+            6,
+            7,
+            8,
+            9,
+            0,
+            11,
+            12,
+            13,
+            14,
+            12,
+            16,
+            17,
+            18,
+            19,
+            20,
+            19,
+            22,
+            12,
+            24,
+            25,
+            26,
+            27,
+            28,
+            27,
+            30,
+        ],
+        joints_left=[6, 7, 8, 9, 10, 16, 17, 18, 19, 20, 21, 22, 23],
+        joints_right=[1, 2, 3, 4, 5, 24, 25, 26, 27, 28, 29, 30, 31],
+    )
 
     width, height = 960, 540
     keypoints = normalize_screen_coordinates(keypoints, w=width, h=height)
@@ -86,3 +130,25 @@ if __name__ == "__main__":
     print(f"Prediction shape: {prediction.shape}")
 
     # Next step: adapting the code for the visualization
+    if False:
+        anim_output = {"Reconstruction": prediction}
+        keypoints = image_coordinates(keypoints, w=width, h=height)
+
+        from common.visualization import render_animation
+
+        render_animation(
+            keypoints,
+            keypoints_metadata,
+            anim_output,
+            h36m_skeleton,
+            50,
+            args.viz_bitrate,
+            azimuth,
+            args.viz_output,
+            limit=args.viz_limit,
+            downsample=args.viz_downsample,
+            size=args.viz_size,
+            input_video_path=args.viz_video,
+            viewport=(width, height),
+            input_video_skip=args.viz_skip,
+        )
