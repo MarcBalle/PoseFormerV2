@@ -114,9 +114,9 @@ if __name__ == "__main__":
         inputs_2d = inputs_2d.cuda()
         inputs_2d_flip = inputs_2d_flip.cuda()
 
-    predicted_3d_pos = model_pos(inputs_2d)
+    predicted_3d_pos = model_pos(inputs_2d[:5000])
     print(f"{predicted_3d_pos.shape}")
-    predicted_3d_pos_flip = model_pos(inputs_2d_flip)
+    predicted_3d_pos_flip = model_pos(inputs_2d_flip[:5000])
     print(f"{predicted_3d_pos_flip.shape}")
 
     predicted_3d_pos_flip[:, :, :, 0] *= -1
