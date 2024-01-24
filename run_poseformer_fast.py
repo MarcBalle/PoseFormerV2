@@ -99,32 +99,36 @@ if __name__ == "__main__":
     checkpoint = torch.load(chk_filename, map_location=lambda storage, loc: storage)
     model_pos.load_state_dict(checkpoint["model_pos"], strict=False)
 
-    inputs_2d = torch.from_numpy(keypoints.astype("float32"))
-    ##### apply test-time-augmentation (following Videopose3d)
-    inputs_2d_flip = inputs_2d.clone()
-    inputs_2d_flip[:, :, :, 0] *= -1
-    inputs_2d_flip[:, :, kps_left + kps_right, :] = inputs_2d_flip[:, :, kps_right + kps_left, :]
+    with torch.no_grad():
+        inputs_2d = torch.from_numpy(keypoints.astype("float32"))
+        ##### apply test-time-augmentation (following Videopose3d)
+        inputs_2d_flip = inputs_2d.clone()
+        inputs_2d_flip[:, :, :, 0] *= -1
+        inputs_2d_flip[:, :, kps_left + kps_right, :] = inputs_2d_flip[:, :, kps_right + kps_left, :]
 
-    inputs_2d = eval_data_prepare(receptive_field, inputs_2d)
-    inputs_2d_flip = eval_data_prepare(receptive_field, inputs_2d_flip)
+        inputs_2d = eval_data_prepare(receptive_field, inputs_2d)
+        inputs_2d_flip = eval_data_prepare(receptive_field, inputs_2d_flip)
 
-    if torch.cuda.is_available():
-        model_pos = nn.DataParallel(model_pos)
-        model_pos = model_pos.cuda()
-        inputs_2d = inputs_2d.cuda()
-        inputs_2d_flip = inputs_2d_flip.cuda()
+        if torch.cuda.is_available():
+            model_pos = nn.DataParallel(model_pos)
+            model_pos = model_pos.cuda()
+            inputs_2d = inputs_2d.cuda()
+            inputs_2d_flip = inputs_2d_flip.cuda()
 
-    predicted_3d_pos = model_pos(inputs_2d[2000:2500])
-    print(f"{predicted_3d_pos.shape}")
-    predicted_3d_pos_flip = model_pos(inputs_2d_flip[2000:2500])
-    print(f"{predicted_3d_pos_flip.shape}")
+        predicted_3d_pos = model_pos(inputs_2d[2000:2500])
+        print(f"{predicted_3d_pos.shape}")
+        predicted_3d_pos_flip = model_pos(inputs_2d_flip[2000:2500])
+        print(f"{predicted_3d_pos_flip.shape}")
 
-    predicted_3d_pos_flip[:, :, :, 0] *= -1
-    predicted_3d_pos_flip[:, :, joints_left + joints_right] = predicted_3d_pos_flip[:, :, joints_right + joints_left]
+        predicted_3d_pos_flip[:, :, :, 0] *= -1
+        predicted_3d_pos_flip[:, :, joints_left + joints_right] = predicted_3d_pos_flip[
+            :, :, joints_right + joints_left
+        ]
 
-    predicted_3d_pos = torch.mean(torch.cat((predicted_3d_pos, predicted_3d_pos_flip), dim=1), dim=1, keepdim=True)
+        predicted_3d_pos = torch.mean(torch.cat((predicted_3d_pos, predicted_3d_pos_flip), dim=1), dim=1, keepdim=True)
 
-    prediction = predicted_3d_pos.squeeze(0).cpu().numpy()
+        prediction = predicted_3d_pos.squeeze(0).cpu().numpy()
+
     prediction = np.squeeze(prediction)
 
     print(f"Prediction shape: {prediction.shape}")
