@@ -121,8 +121,8 @@ if __name__ == "__main__":
             inputs_2d = inputs_2d.cuda()
             inputs_2d_flip = inputs_2d_flip.cuda()
 
-        predicted_3d_pos = model_pos(inputs_2d[2000:2500])
-        predicted_3d_pos_flip = model_pos(inputs_2d_flip[2000:2500])
+        predicted_3d_pos = model_pos(inputs_2d)
+        predicted_3d_pos_flip = model_pos(inputs_2d_flip)
 
         predicted_3d_pos_flip[:, :, :, 0] *= -1
         predicted_3d_pos_flip[:, :, joints_left + joints_right] = predicted_3d_pos_flip[
@@ -134,9 +134,9 @@ if __name__ == "__main__":
         prediction = predicted_3d_pos.squeeze(0).cpu().numpy()
 
     prediction = np.squeeze(prediction)
-    prediction = np.pad(
-        prediction, ((0, n_frames - prediction.shape[0]), (0, 0), (0, 0)), "constant", constant_values=0.0
-    )
+    # prediction = np.pad(
+    #     prediction, ((0, n_frames - prediction.shape[0]), (0, 0), (0, 0)), "constant", constant_values=0.0
+    # )
 
     print(f"Prediction shape: {prediction.shape}")
 
@@ -151,7 +151,7 @@ if __name__ == "__main__":
         keypoints_metadata,
         anim_output,
         h36m_skeleton,
-        50,
+        15,
         args.viz_bitrate,
         azimuth,
         args.viz_output,
