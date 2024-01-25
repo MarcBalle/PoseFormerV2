@@ -31,6 +31,8 @@ if __name__ == "__main__":
     }
     keypoints_symmetry = None
     azimuth = np.array(70.0, dtype="float32")
+    n_frames = keypoints.shape[0]
+    # TODO: fix black formatting, this is horrible
     h36m_skeleton = Skeleton(
         parents=[
             -1,
@@ -69,6 +71,10 @@ if __name__ == "__main__":
         joints_left=[6, 7, 8, 9, 10, 16, 17, 18, 19, 20, 21, 22, 23],
         joints_right=[1, 2, 3, 4, 5, 24, 25, 26, 27, 28, 29, 30, 31],
     )
+
+    h36m_skeleton.remove_joints([4, 5, 9, 10, 11, 16, 20, 21, 22, 23, 24, 28, 29, 30, 31])
+    h36m_skeleton._parents[11] = 8
+    h36m_skeleton._parents[14] = 8
 
     width, height = 960, 540
     keypoints = normalize_screen_coordinates(keypoints, w=width, h=height)
@@ -116,9 +122,7 @@ if __name__ == "__main__":
             inputs_2d_flip = inputs_2d_flip.cuda()
 
         predicted_3d_pos = model_pos(inputs_2d[2000:2500])
-        print(f"{predicted_3d_pos.shape}")
         predicted_3d_pos_flip = model_pos(inputs_2d_flip[2000:2500])
-        print(f"{predicted_3d_pos_flip.shape}")
 
         predicted_3d_pos_flip[:, :, :, 0] *= -1
         predicted_3d_pos_flip[:, :, joints_left + joints_right] = predicted_3d_pos_flip[
@@ -130,29 +134,31 @@ if __name__ == "__main__":
         prediction = predicted_3d_pos.squeeze(0).cpu().numpy()
 
     prediction = np.squeeze(prediction)
+    prediction = np.pad(
+        prediction, ((0, n_frames - prediction.shape[0]), (0, 0), (0, 0)), "constant", constant_values=0.0
+    )
 
     print(f"Prediction shape: {prediction.shape}")
 
-    # Next step: adapting the code for the visualization
-    if False:
-        anim_output = {"Reconstruction": prediction}
-        keypoints = image_coordinates(keypoints, w=width, h=height)
+    anim_output = {"Reconstruction": prediction}
+    keypoints = image_coordinates(keypoints, w=width, h=height)
+    keypoints = np.squeeze(keypoints)
 
-        from common.visualization import render_animation
+    from common.visualization import render_animation
 
-        render_animation(
-            keypoints,
-            keypoints_metadata,
-            anim_output,
-            h36m_skeleton,
-            50,
-            args.viz_bitrate,
-            azimuth,
-            args.viz_output,
-            limit=args.viz_limit,
-            downsample=args.viz_downsample,
-            size=args.viz_size,
-            input_video_path=args.viz_video,
-            viewport=(width, height),
-            input_video_skip=args.viz_skip,
-        )
+    render_animation(
+        keypoints,
+        keypoints_metadata,
+        anim_output,
+        h36m_skeleton,
+        50,
+        args.viz_bitrate,
+        azimuth,
+        args.viz_output,
+        limit=args.viz_limit,
+        downsample=args.viz_downsample,
+        size=args.viz_size,
+        input_video_path=args.viz_video,
+        viewport=(width, height),
+        input_video_skip=args.viz_skip,
+    )
