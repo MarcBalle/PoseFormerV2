@@ -58,8 +58,10 @@ def get_fps(filename):
 
 def read_video(filename, skip=0, limit=-1):
     # w, h = get_resolution(filename)
-    w = 1000
-    h = 1002
+    # w = 1000
+    # h = 1002
+    w = 960
+    h = 540
 
     command = [
         "ffmpeg",
