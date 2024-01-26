@@ -112,6 +112,7 @@ if __name__ == "__main__":
         inputs_2d_flip[:, :, :, 0] *= -1
         inputs_2d_flip[:, :, kps_left + kps_right, :] = inputs_2d_flip[:, :, kps_right + kps_left, :]
 
+        # TODO: pad the sequence!
         inputs_2d = eval_data_prepare(receptive_field, inputs_2d)
         inputs_2d_flip = eval_data_prepare(receptive_field, inputs_2d_flip)
 
@@ -137,6 +138,12 @@ if __name__ == "__main__":
     # prediction = np.pad(
     #     prediction, ((0, n_frames - prediction.shape[0]), (0, 0), (0, 0)), "constant", constant_values=0.0
     # )
+    rot = np.array([0.58942515, -0.7818877, 0.13991211, -0.14715362], dtype="float32")
+    prediction = camera_to_world(prediction, R=rot, t=0)
+    # We don't have the trajectory, but at least we can rebase the height
+    prediction[:, :, 2] -= np.min(prediction[:, :, 2])
+
+    # np.savez("prediction.npz", data=prediction)
 
     print(f"Prediction shape: {prediction.shape}")
 
