@@ -22,7 +22,7 @@ if __name__ == "__main__":
     args = parse_args()
 
     keypoints = np.load(args.keypoints, allow_pickle=True)["keypoints"]
-    keypoints = np.expand_dims(keypoints, axis=1)
+    keypoints = np.expand_dims(keypoints, axis=0)
     # TODO: fill if needed
     keypoints_metadata = {
         "layout_name": "h36m",
@@ -100,6 +100,10 @@ if __name__ == "__main__":
         args=args,
     )
 
+    if torch.cuda.is_available():
+        model_pos = nn.DataParallel(model_pos)
+        model_pos = model_pos.cuda()
+
     chk_filename = os.path.join(args.checkpoint, args.resume if args.resume else args.evaluate)
     print("Loading checkpoint", chk_filename)
     checkpoint = torch.load(chk_filename, map_location=lambda storage, loc: storage)
@@ -117,8 +121,6 @@ if __name__ == "__main__":
         inputs_2d_flip = eval_data_prepare(receptive_field, inputs_2d_flip)
 
         if torch.cuda.is_available():
-            model_pos = nn.DataParallel(model_pos)
-            model_pos = model_pos.cuda()
             inputs_2d = inputs_2d.cuda()
             inputs_2d_flip = inputs_2d_flip.cuda()
 
@@ -138,8 +140,8 @@ if __name__ == "__main__":
     # prediction = np.pad(
     #     prediction, ((0, n_frames - prediction.shape[0]), (0, 0), (0, 0)), "constant", constant_values=0.0
     # )
-    rot = np.array([0.58942515, -0.7818877, 0.13991211, -0.14715362], dtype="float32")
-    prediction = camera_to_world(prediction, R=rot, t=0)
+    # rot = np.array([0.58942515, -0.7818877, 0.13991211, -0.14715362], dtype="float32")
+    # prediction = camera_to_world(prediction, R=rot, t=0)
     # We don't have the trajectory, but at least we can rebase the height
     prediction[:, :, 2] -= np.min(prediction[:, :, 2])
 
