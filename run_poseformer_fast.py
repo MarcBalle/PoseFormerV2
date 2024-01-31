@@ -22,8 +22,15 @@ if __name__ == "__main__":
     args = parse_args()
 
     keypoints = np.load(args.keypoints, allow_pickle=True)["keypoints"]
+
+    # Pad sequence predict first and last frames
+    receptive_field = args.number_of_frames
+    pad = (receptive_field - 1) // 2  # Padding on each side
+    keypoints = np.pad(keypoints, ((pad, pad), (0, 0), (0, 0)), "edge")
+
+    # To match tensor dimensions in the original code
     keypoints = np.expand_dims(keypoints, axis=0)
-    # TODO: fill if needed
+
     keypoints_metadata = {
         "layout_name": "h36m",
         "num_joints": 17,
@@ -32,7 +39,7 @@ if __name__ == "__main__":
     keypoints_symmetry = None
     azimuth = np.array(70.0, dtype="float32")
     n_frames = keypoints.shape[0]
-    # TODO: fix black formatting, this is horrible
+
     h36m_skeleton = Skeleton(
         parents=[
             -1,
@@ -79,10 +86,9 @@ if __name__ == "__main__":
     width, height = 960, 540
     keypoints = normalize_screen_coordinates(keypoints, w=width, h=height)
 
-    receptive_field = args.number_of_frames
     num_joints = 17
+
     # I copied these from run_poseformer.py
-    # TODO: It should be checked if actually these correspond to our case
     kps_left = [4, 5, 6, 11, 12, 13]
     kps_right = [1, 2, 3, 14, 15, 16]
     joints_left = [4, 5, 6, 11, 12, 13]
@@ -168,6 +174,9 @@ if __name__ == "__main__":
 
     # Create visualization
     from common.visualization import render_animation
+
+    # Remove the padding
+    keypoints = keypoints[pad:-pad]
 
     render_animation(
         keypoints,
