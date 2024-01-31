@@ -137,15 +137,6 @@ if __name__ == "__main__":
         prediction = predicted_3d_pos.squeeze(0).cpu().numpy()
 
     prediction = np.squeeze(prediction)
-    # prediction = np.pad(
-    #     prediction, ((0, n_frames - prediction.shape[0]), (0, 0), (0, 0)), "constant", constant_values=0.0
-    # )
-    # rot = np.array([0.58942515, -0.7818877, 0.13991211, -0.14715362], dtype="float32")
-    # prediction = camera_to_world(prediction, R=rot, t=0)
-    # We don't have the trajectory, but at least we can rebase the height
-    # prediction[:, :, 2] -= np.min(prediction[:, :, 2])
-
-    # np.savez("prediction.npz", data=prediction)
 
     print(f"Prediction shape: {prediction.shape}")
 
