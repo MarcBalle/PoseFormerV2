@@ -21,6 +21,7 @@ def eval_data_prepare(receptive_field, inputs_2d):
 if __name__ == "__main__":
     args = parse_args()
 
+    # nframes x 17 x
     keypoints = np.load(args.keypoints, allow_pickle=True)["keypoints"]
 
     # Pad sequence predict first and last frames
@@ -122,7 +123,6 @@ if __name__ == "__main__":
         inputs_2d_flip[:, :, :, 0] *= -1
         inputs_2d_flip[:, :, kps_left + kps_right, :] = inputs_2d_flip[:, :, kps_right + kps_left, :]
 
-        # TODO: pad the sequence!
         inputs_2d = eval_data_prepare(receptive_field, inputs_2d)
         inputs_2d_flip = eval_data_prepare(receptive_field, inputs_2d_flip)
 
