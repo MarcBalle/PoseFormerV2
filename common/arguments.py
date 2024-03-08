@@ -140,6 +140,10 @@ def parse_args():
     parser.set_defaults(test_time_augmentation=True)
     # parser.set_defaults(test_time_augmentation=False)
 
+    # My arguments
+    parser.add_argument("--save_output", action="store_true", help="saving the prediction in run_poseformer_fast.py")
+    parser.add_argument("--model_output", type=str, help="output folder to save prediction from the model")
+
     args = parser.parse_args()
     # Check invalid configuration
     if args.resume and args.evaluate:

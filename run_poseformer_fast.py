@@ -146,51 +146,56 @@ if __name__ == "__main__":
 
     print(f"Prediction shape: {prediction.shape}")
 
-    # For visualization purposes, make all join coordinates relative to the hip joint,
-    # being the hip joint the (0, 0, 0). This is because we don't have the camera extrinsics.
-    prediction -= np.expand_dims(prediction[:, 0, :], axis=1)
+    if args.save_output:
+        kpts_filename = os.path.basename(args.keypoints)
+        np.savez(os.path.join(args.model_output, "3d_" + kpts_filename), keypoints=prediction)
 
-    # Hardcoded (experimentally found) rotation matrix. Only for visualization purposes.
-    angle_x = 60 * (np.pi / 180)
-    angle_y = 180 * (np.pi / 180)
-    angle_z = -30 * (np.pi / 180)
+    if args.render:
+        # For visualization purposes, make all join coordinates relative to the hip joint,
+        # being the hip joint the (0, 0, 0). This is because we don't have the camera extrinsics.
+        prediction -= np.expand_dims(prediction[:, 0, :], axis=1)
 
-    rot_x = np.array([[1, 0, 0], [0, np.cos(angle_x), -np.sin(angle_x)], [0, np.sin(angle_x), np.cos(angle_x)]])
-    rot_y = np.array([[np.cos(angle_y), 0, np.sin(angle_y)], [0, 1, 0], [-np.sin(angle_y), 0, np.cos(angle_y)]])
-    rot_z = np.array([[np.cos(angle_z), -np.sin(angle_z), 0], [np.sin(angle_z), np.cos(angle_z), 0], [0, 0, 1]])
+        # Hardcoded (experimentally found) rotation matrix. Only for visualization purposes.
+        angle_x = 60 * (np.pi / 180)
+        angle_y = 180 * (np.pi / 180)
+        angle_z = -30 * (np.pi / 180)
 
-    # Hardcoded (experimentally found) translation
-    tx = 0
-    ty = 0
-    tz = 0.75
-    t = np.array([tx, ty, tz])
+        rot_x = np.array([[1, 0, 0], [0, np.cos(angle_x), -np.sin(angle_x)], [0, np.sin(angle_x), np.cos(angle_x)]])
+        rot_y = np.array([[np.cos(angle_y), 0, np.sin(angle_y)], [0, 1, 0], [-np.sin(angle_y), 0, np.cos(angle_y)]])
+        rot_z = np.array([[np.cos(angle_z), -np.sin(angle_z), 0], [np.sin(angle_z), np.cos(angle_z), 0], [0, 0, 1]])
 
-    # Apply extrinsics to predictions
-    prediction = (prediction @ rot_x.T @ rot_y.T @ rot_z.T) + t
+        # Hardcoded (experimentally found) translation
+        tx = 0
+        ty = 0
+        tz = 0.75
+        t = np.array([tx, ty, tz])
 
-    anim_output = {"Reconstruction": prediction}
-    keypoints = image_coordinates(keypoints, w=width, h=height)
-    keypoints = np.squeeze(keypoints)
+        # Apply extrinsics to predictions
+        prediction = (prediction @ rot_x.T @ rot_y.T @ rot_z.T) + t
 
-    # Create visualization
-    from common.visualization import render_animation
+        anim_output = {"Reconstruction": prediction}
+        keypoints = image_coordinates(keypoints, w=width, h=height)
+        keypoints = np.squeeze(keypoints)
 
-    # Remove the padding
-    keypoints = keypoints[pad:-pad]
+        # Create visualization
+        from common.visualization import render_animation
 
-    render_animation(
-        keypoints,
-        keypoints_metadata,
-        anim_output,
-        h36m_skeleton,
-        15,
-        args.viz_bitrate,
-        azimuth,
-        args.viz_output,
-        limit=args.viz_limit,
-        downsample=args.viz_downsample,
-        size=args.viz_size,
-        input_video_path=args.viz_video,
-        viewport=(width, height),
-        input_video_skip=args.viz_skip,
-    )
+        # Remove the padding
+        keypoints = keypoints[pad:-pad]
+
+        render_animation(
+            keypoints,
+            keypoints_metadata,
+            anim_output,
+            h36m_skeleton,
+            15,
+            args.viz_bitrate,
+            azimuth,
+            args.viz_output,
+            limit=args.viz_limit,
+            downsample=args.viz_downsample,
+            size=args.viz_size,
+            input_video_path=args.viz_video,
+            viewport=(width, height),
+            input_video_skip=args.viz_skip,
+        )
