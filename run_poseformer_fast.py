@@ -1,4 +1,18 @@
+""" Run the inference mutiple time on multiple inputs. The inputs must be organised in a concrete directory tree: 
+        /root_dir
+            /subdir1
+                /some_relative_path (args.rel_path)
+                    <2d_keypoints_file>.npz
+            /subdir2
+                /some_relative_path (args.rel_path)
+                    <2d_keypoints_file>.npz
+            .
+            .
+            .
+"""
+
 import os
+import glob
 
 import numpy as np
 import torch
@@ -18,9 +32,7 @@ def eval_data_prepare(receptive_field, inputs_2d):
     return eval_input_2d
 
 
-if __name__ == "__main__":
-    args = parse_args()
-
+def main():
     # nframes x 17 x
     keypoints = np.load(args.keypoints, allow_pickle=True)["keypoints"]
 
@@ -147,8 +159,8 @@ if __name__ == "__main__":
     print(f"Prediction shape: {prediction.shape}")
 
     if args.save_output:
-        kpts_filename = os.path.basename(args.keypoints)
-        np.savez(os.path.join(args.model_output, "3d_" + kpts_filename), keypoints=prediction)
+        root_dir, kpts_filename = os.path.split(args.keypoints)
+        np.savez(os.path.join(root_dir, "3d_" + kpts_filename), keypoints=prediction)
 
     if args.render:
         # For visualization purposes, make all join coordinates relative to the hip joint,
@@ -199,3 +211,20 @@ if __name__ == "__main__":
             viewport=(width, height),
             input_video_skip=args.viz_skip,
         )
+
+
+if __name__ == "__main__":
+    args = parse_args()
+
+    assert os.path.isdir(args.keypoints), f"{args.keypoints} is not a directory"
+
+    filenames = []
+    subdirs = os.listdir(args.keypoints)
+    subdirs.sort()
+    for subdir in subdirs:
+        kpts_files = glob.glob(os.path.join(args.keypoints, subdir, args.rel_path, "*.npz"))
+        filenames.extend(kpts_files)
+
+    for fname in filenames:
+        args.keypoints = fname
+        main()

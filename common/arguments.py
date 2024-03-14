@@ -143,6 +143,11 @@ def parse_args():
     # My arguments
     parser.add_argument("--save_output", action="store_true", help="saving the prediction in run_poseformer_fast.py")
     parser.add_argument("--model_output", type=str, help="output folder to save prediction from the model")
+    parser.add_argument(
+        "--rel_path",
+        type=str,
+        help="relative path from root dir to find keypoints npz (only for multiple inputs inference)",
+    )
 
     args = parser.parse_args()
     # Check invalid configuration
